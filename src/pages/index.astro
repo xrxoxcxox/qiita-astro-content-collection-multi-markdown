@@ -1,5 +1,7 @@
 ---
-
+import { type CollectionEntry, getCollection } from "astro:content";
+const blogEntries = await getCollection("blog");
+type BlogEntry = CollectionEntry<"blog">;
 ---
 
 <html lang="en">
@@ -12,5 +14,12 @@
 	</head>
 	<body>
 		<h1>Astro</h1>
+		<ul>
+			{blogEntries.map((blogEntry: BlogEntry) => (
+				<li>
+					<a href={`/blog/${blogEntry.slug}`}>{blogEntry.data.title}</a>
+				</li>
+			))}
+		</ul>
 	</body>
 </html>
