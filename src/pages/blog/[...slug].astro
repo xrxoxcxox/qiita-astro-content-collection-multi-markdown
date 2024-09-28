@@ -1,14 +1,31 @@
 ---
-import { getCollection } from "astro:content";
-export async function getStaticPaths() {
-	const entries = await getCollection("blog");
-	return entries.map((entry) => ({
-		params: { slug: entry.slug },
-		props: { entry },
-	}));
+import { getCollection, type CollectionEntry } from "astro:content";
+
+export async function getSummary(slug: CollectionEntry<"blog">["slug"]) {
+	try {
+		const summary = await import(`../../content/blog/${slug}/_summary.md`);
+		return summary;
+	} catch (error) {
+		return null;
+	}
 }
 
-const { entry } = Astro.props;
+export async function getStaticPaths() {
+	const entries = await getCollection("blog");
+	const paths = await Promise.all(
+		entries.map(async (entry) => {
+			const SummaryContent = await getSummary(entry.slug);
+			return {
+				params: { slug: entry.slug },
+				props: { entry, SummaryContent },
+			};
+		}),
+	);
+
+	return paths;
+}
+
+const { entry, SummaryContent } = Astro.props;
 const { Content } = await entry.render();
 ---
 
@@ -22,6 +39,7 @@ const { Content } = await entry.render();
 	</head>
 	<body>
 		<h1>{entry.data.title}</h1>
+		{SummaryContent ? <SummaryContent.default /> : null}
 		<Content />
 	</body>
 </html>
